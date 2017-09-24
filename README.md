@@ -29,3 +29,5 @@ Planing
 
 
 The last one: thing about the moving animation
+
+!!!important: You'd better do not use jquery in vue

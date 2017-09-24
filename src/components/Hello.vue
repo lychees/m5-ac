@@ -1,10 +1,30 @@
 <template>
-  <div class="hello">
-    <div>
-      <div class="yellow circle"></div>
-      <div class="blue circle"></div>
-      <div class="red circle"></div>
-      <div class="green circle"></div>
+  <div class="hello" style="font-size:50px">
+    <div class="row">
+      <div class="yellow container col-sm-6" @click="OnColorSelect('yellow')" :dis="yellow_disabled">
+        <div class="circle">{{yellow_name}}</div>
+      </div>
+      <div class="blue container col-sm-6" @click="OnColorSelect('blue')" style="float:right" :dis="blue_disabled">
+        <div class="circle">{{blue_name}}</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="red container col-sm-6" @click="OnColorSelect('red')" :dis="red_disabled">
+        <div class="circle">{{red_name}}</div>
+      </div>
+      <div class="green container col-sm-6" @click="OnColorSelect('green')" style="float:right" :dis="green_disabled">
+        <div class="circle">{{green_name}}</div>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <input type="text" style="height:100px;" v-model="name">
+      <button class="start-btn" v-show="readyToStart" @click="OnStart">Start</button>
+    </div>
+    <div v-show="name=='Matthew5'" class="admin">
+      <div class="yellow" @click="OnRemove(yellow_name)">{{yellow_name}}</div>
+      <div class="blue" @click="OnRemove(blue_name)">{{blue_name}}</div>
+      <div class="red" @click="OnRemove(red_name)">{{red_name}}</div>
+      <div class="green" @click="OnRemove(green_name)">{{green_name}}</div>
     </div>
   </div>
 </template>
@@ -13,51 +33,89 @@
 import axios from 'axios'
 import $ from 'jquery'
 import server_url from '../../server/url'
-import socket from 'socket.io'
+var socket = io()
 
 export default {
   name: 'hello',
   data() {
     return {
-      msg: 'Welcome to Your Vue.js App',
+      name: '',
+      yellow_name: '',
+      blue_name: '',
+      red_name: '',
+      green_name: '',
     }
   },
   methods: {
-    testCrossDomain: function() {
-      // function jCallback(result) {
-      //     console.log(result)
-      //     console.log('jCallback')
-      // }
-
-      var self = this;
-      $.ajax({
-        // url: 'https://api.douban.com/v2/movie/in_theaters',
-        url: 'https://m.zhibo8.cc/json/hot/24hours.htm',
-        //wrong way by zhibo8 site
-        // url: 'https://www.zhibo8.cc/zuqiu/json/2017-07-20.htm', no
-        // url: 'https://news.zhibo8.cc/zuqiu/json/2017-07-20.htm', no
-        // url: 'https://soccer.hupu.com/home/latest-news?league=%E8%A5%BF%E7%94%B2&page=1', no
-        dataType: "jsonp",
-        jsonp: "callback",
-        // jsonpCallback: 'jCallback',
-        success: function(data) {
-          console.log(data)
-        },
-        error: function(err, res) {
-          console.log('error')
+    OnColorSelect: function(color) {
+      var self = this
+      var isDisable = self[color + '_disabled'] == 'disabled'
+      if (self.ready && self.color === color) {
+        self.color = ''
+        self.ready = false
+        socket.emit('onCancel', { name: self.name })
+      } else if (!self.ready) {
+        if (self.name && !isDisable) {
+          self.color = color
+          self.ready = true
+          socket.emit('onReady', { name: self.name, color: color })
         }
-      })
-
-      // $.getJSON('https://news.zhibo8.cc/zuqiu/2017-08-13/599012840c5c0.htm?callback=?', function (res) {
-      //     console.log(res)
+      }
+    },
+    OnRemove: function(userName) {
+      socket.emit('onCancel', { name: userName })
+    },
+    OnStart: function() {
+      //How to redirect to new component
+      if (this.ready) {
+        console.log('to start...')
+      }
+    },
+    init: function(players) {
+      var self = this
+      // $('.container').each((index, item) => {
+      //   $(item).removeClass('disabled')
       // })
+      self.yellow_name = ''
+      self.blue_name = ''
+      self.red_name = ''
+      self.green_name = ''
+      self.yellow_disabled = ''
+      self.blue_disabled = ''
+      self.red_disabled = ''
+      self.green_disabled = ''
+      self.readyToStart = false
+      players.forEach(player => {
+        // $(`.${player.color}`).addClass('disabled')
+        //TODO: Check it in YDKJS, for and switch return false or return
+        self[player.color + '_name'] = player.name
+        self[player.color + '_disabled'] = 'disabled'
+      })
+      //kick out by admin
+      if (self.ready && self.color != '') {
+        if (self[self.color + '_name'] == '') {
+          self.ready = false
+          self.color = ''
+        }
+      }
+      if (players.length == 4) {
+        self.readyToStart = true
+      }
     }
   },
   created: function() {
+    var self = this
+
     axios.post(server_url.getRoomData).then(resp => {
-      console.log(resp)
+      if (Array.isArray(resp.data) && resp.data.length > 0) {
+        self.init(resp.data)
+      }
     }).catch(err => {
       console.error(err)
+    })
+
+    socket.on('update', function(players) {
+      self.init(players)
     })
   }
 }
@@ -84,31 +142,48 @@ a {
   color: #42b983;
 }
 
+.container {
+  width: 300px;
+  height: 300px;
+}
+
 .circle {
   border-radius: 50%;
+  border: solid 10px white;
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  margin-top: 50px;
+  margin-left: 34px;
 }
 
 .yellow {
-  position: absolute;
-  float: left;
-  color: yellow;
+  background-color: #f4f42e;
 }
 
 .blue {
-  position: absolute;
-  float: right;
-  color: blue;
+  background-color: #4abcf3;
 }
 
 .red {
-  position: absolute;
-  float: left;
-  color: red;
+  background-color: #f93c3c;
 }
 
 .green {
-  position: absolute;
-  float: right;
-  color: green;
+  background-color: #36dc36;
+}
+
+.start-btn {
+  height: 100px;
+  width: 200px;
+}
+
+div[dis='disabled'] {
+  opacity: 0.5;
+}
+
+.admin>div {
+  display: inline-block;
+  width: 500px;
 }
 </style>

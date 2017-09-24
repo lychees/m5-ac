@@ -1,5 +1,5 @@
 module.exports = {
     getRoomData: function (req, res) {
-        res.send({ hehe: '1' });
+        res.send(global.players);
     },
 }
