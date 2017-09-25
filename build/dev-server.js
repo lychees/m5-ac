@@ -106,6 +106,10 @@ io.on('connection', function (socket) {
     global.players = players
     io.emit('update', players)
   })
+
+  socket.on('gotoAC', function () {
+    io.emit('gotoAC')
+  })
 })
 
 module.exports = {
