@@ -20,4 +20,19 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
+.yellow {
+  background-color: #f4f42e;
+}
+
+.blue {
+  background-color: #4abcf3;
+}
+
+.red {
+  background-color: #f93c3c;
+}
+
+.green {
+  background-color: #36dc36;
+}
 </style>

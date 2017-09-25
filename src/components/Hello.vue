@@ -66,9 +66,7 @@ export default {
       socket.emit('onCancel', { name: userName })
     },
     OnStart: function () {
-      //How to redirect to new component
       if (this.ready) {
-        console.log('to start...')
         socket.emit('gotoAC')
       }
     },
@@ -119,7 +117,7 @@ export default {
       self.init(players)
     })
     socket.on('gotoAC', function () {
-      this.$router.push({ path: '/chess', params: { name: self.name, color: self.color } })
+      self.$router.push({ path: '/chess', params: { name: self.name, color: self.color } })
     })
   }
 }
@@ -159,22 +157,6 @@ a {
   height: 200px;
   margin-top: 50px;
   margin-left: 34px;
-}
-
-.yellow {
-  background-color: #f4f42e;
-}
-
-.blue {
-  background-color: #4abcf3;
-}
-
-.red {
-  background-color: #f93c3c;
-}
-
-.green {
-  background-color: #36dc36;
 }
 
 .start-btn {
