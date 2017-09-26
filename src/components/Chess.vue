@@ -39,15 +39,23 @@ export default {
   },
   created: function() {
     var self = this
-    // var test = 800
-    var unitLength = screen.width / 15 + 'px'
-    var coll = new CoordCollection(screen.width).Collection
-    for (let coord of coll) {
+    var unitLength = document.body.clientWidth / 15
+    var cla = new CoordCollection(document.body.clientWidth)
+    for (let coord of cla.Collection) {
       self.chessHtml += `
-        <div id="${coord.id}" class="${coord.color} chess-ele" style="top:${coord.top}; left:${coord.left}; width:${unitLength}; height:${unitLength};">
+        <div id="${coord.id}" class="${coord.color} chess-ele" style="top:${coord.top}; left:${coord.left};">
           <div class="chess-circle"></div>
         </div>`
     }
+    self.chessHtml += `
+        <div id="red_home" class="red" style="top:${unitLength*11+'px'}; left:0px; width:${unitLength*3+'px'}; height:${unitLength*3+'px'}">
+        </div>
+        <div id="yellow_home" class="yellow" style="top:0px; left:0px; width:${unitLength*3+'px'}; height:${unitLength*3+'px'}">
+        </div>
+        <div id="blue_home" class="blue" style="top:0px; left:${unitLength*11+'px'}; width:${unitLength*3+'px'}; height:${unitLength*3+'px'}">
+        </div>
+        <div id="green_home" class="green" style="top:${unitLength*11+'px'}; left:${unitLength*11+'px'}; width:${unitLength*3+'px'}; height:${unitLength*3+'px'}">
+        </div>`
   }
 }
 </script>
@@ -56,9 +64,9 @@ export default {
 <style>
 .chess-ele {
   position: absolute;
-  /*width: calc(100% / 15);
+  width: calc(100% / 15);
   height: 0;
-  padding-bottom: calc(100% / 15);*/
+  padding-bottom: calc(100% / 15);
 }
 
 .chess-circle {

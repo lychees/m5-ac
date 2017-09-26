@@ -546,12 +546,66 @@ var positionMap = [
     { id: 52, unitLeft: 5, unitTop: 14 },
 ]
 
+var targetPipeMap = [
+    //left top right bottom
+    { id: 61, unitLeft: 1, unitTop: 7 },
+    { id: 62, unitLeft: 2, unitTop: 7 },
+    { id: 63, unitLeft: 3, unitTop: 7 },
+    { id: 64, unitLeft: 4, unitTop: 7 },
+    { id: 65, unitLeft: 5, unitTop: 7 },
+    { id: 66, unitLeft: 6, unitTop: 7 },
+
+    { id: 71, unitLeft: 7, unitTop: 1 },
+    { id: 72, unitLeft: 7, unitTop: 2 },
+    { id: 73, unitLeft: 7, unitTop: 3 },
+    { id: 74, unitLeft: 7, unitTop: 4 },
+    { id: 75, unitLeft: 7, unitTop: 5 },
+    { id: 76, unitLeft: 7, unitTop: 6 },
+
+    { id: 81, unitLeft: 13, unitTop: 7 },
+    { id: 82, unitLeft: 12, unitTop: 7 },
+    { id: 83, unitLeft: 11, unitTop: 7 },
+    { id: 84, unitLeft: 10, unitTop: 7 },
+    { id: 85, unitLeft: 9, unitTop: 7 },
+    { id: 86, unitLeft: 8, unitTop: 7 },
+
+    { id: 91, unitLeft: 7, unitTop: 13 },
+    { id: 92, unitLeft: 7, unitTop: 12 },
+    { id: 93, unitLeft: 7, unitTop: 11 },
+    { id: 94, unitLeft: 7, unitTop: 10 },
+    { id: 95, unitLeft: 7, unitTop: 9 },
+    { id: 96, unitLeft: 7, unitTop: 8 },
+]
+
 export default class CoordCollection {
     constructor(screenWidth) {
         this.unitLength = screenWidth / 15
-        this.Collection = []
+        this.RoadCollection = []
         for (let i = 1; i < 53; i++) {
-            this.Collection.push(new Coord(i, this.unitLength))
+            this.RoadCollection.push(new Coord(i, this.unitLength))
+        }
+
+        this.TargetPipes = []
+        for (let item of targetPipeMap) {
+            this.TargetPipes.push({
+                id: item.id,
+                top: item.unitTop * this.unitLength + 'px',
+                left: item.unitLeft * this.unitLength + 'px',
+                color: this.getTargetPipeColor(item.id)
+            })
+        }
+
+        this.Collection = this.RoadCollection.concat(this.TargetPipes)
+    }
+    getTargetPipeColor = index => {
+        if (index < 70) {
+            return 'yellow'
+        } else if (index < 80) {
+            return 'blue'
+        } else if (index < 90) {
+            return 'green'
+        } else {
+            return 'red'
         }
     }
 }
