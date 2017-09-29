@@ -1,15 +1,7 @@
 <template>
-  <div class="chess" style="font-size:50px" v-html="chessHtml">
-    <!--
-                                    1.need a state to confirm chess running or stop, the socket may broken, when finish step should tell server ready
-
-                                    2.12*4+4 points without target pipe, 6*4 target pipe points
-                                    totaly 76 points and 4*4 in home
-
-                                    3.Make sure the 4 players are all online, or it would be pause or replace by computer
-
-                                    4.green=>red=>yellow=>blue
-                                    -->
+  <div class="chess" style="font-size:50px">
+    <div v-html="chessHtml"></div>
+    <div @click="onDiceClick" :class="diceColor" id="dice-ele" style="position:absolute;">{{diceNumber}}</div>
   </div>
 </template>
 
@@ -24,17 +16,92 @@ export default {
   name: 'chess',
   data() {
     return {
-      chessHtml: ''
+      coordCollection: [],
+      outHomeCollection: [],
+      chessHtml: '',
+      name: '',
+      color: '',
+      diceNumber: 0,
+      diceColor: '',
+      flow_position_id: -1,
     }
   },
   methods: {
-    initPosition: function(unitLength) {
+    initClientListener: function() {
+      var self = this
+      socket.on('position-update', function(resp) {
+        if (resp.moveNext) {
+          //make sure the true player move next
+          if (self.name == resp.name) {
+            self.flow_position_from = resp.position_to
+            self.move(resp.chess_numbers[0])
+          }
+        }
+
+        //moving animation
+        var coordPosition
+        if (resp.outHome) {
+          coordPosition = self.outHomeCollection.find(x => x.color == resp.color)
+        } else {
+          coordPosition = self.coordCollection.find(x => x.id == resp.position_to)
+        }
+        $(`#${resp.color + '_' + resp.chess_numbers[0]}`).animate({ top: coordPosition.top, left: coordPosition.left });
+
+        if (!resp.moveNext) {
+          self.diceColor = resp.nextDiceColor
+        }
+      })
+
+      socket.on('dice-update', function(resp) {
+        console.log('dice-update', resp)
+        this.diceNumber = resp.number
+        //resp.name
+      })
+      socket.on('dice-update-animation', function(resp) {
+        console.log('dice-update-animation', resp)
+        this.diceNumber = resp.number
+        //$('#dice-ele').animate({})
+        //resp.nextDiceColor
+        this.diceColor = resp.nextDiceColor
+      })
+    },
+    move: function(chess_number, movingByClick = false) {
+      socket.emit('onMove', {
+        name: this.name,
+        chess_number: chess_number,
+        byClick: movingByClick,
+        //use in moving flow, unused while by click
+        flow_position_id: this.flow_position_id,
+        diceNumber: this.diceNumber,
+      })
+    },
+
+    //UI Event
+    onChessClick: function(chess_number) {
+      if (event.target.parent.hasClass(`${this.color}`)) {
+        this.move(chess_number, true)
+      }
+    },
+    onDiceClick: function() {
+      if ($(event.target).hasClass(`${this.color}`)) {
+        socket.emit('onDice', this.name)
+      }
     }
   },
   created: function() {
     var self = this
+    self.name = this.$route.query.name
+    self.color = this.$route.query.color
+    axios.post(server_url.getChessData).then(resp => {
+      self.diceColor = resp.data
+    }).catch(err => {
+      console.error(err)
+    })
+
     var unitLength = document.body.clientWidth / 15
     var cla = new CoordCollection(document.body.clientWidth)
+    self.coordCollection = cla.Collection
+    self.outHomeCollection = cla.OutHomeCollection
     for (let coord of cla.Collection) {
       self.chessHtml += `
         <div id="${coord.id}" class="${coord.color} chess-ele" style="top:${coord.top}; left:${coord.left};">
@@ -43,30 +110,42 @@ export default {
     }
     self.chessHtml += `
         <div class="home red" style="position:absolute; top:${unitLength * 12 + 'px'}; left:0px; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="red_1" class="red-d-p-1">1</div>
-          <div id="red_2" class="red-d-p-2">2</div>
-          <div id="red_3" class="red-d-p-3">3</div>
-          <div id="red_4" class="red-d-p-4">4</div>
+          <div id="red_1" class="red-d-p-1" @click="onChessClick(1)">1</div>
+          <div id="red_2" class="red-d-p-2" @click="onChessClick(2)">2</div>
+          <div id="red_3" class="red-d-p-3" @click="onChessClick(3)">3</div>
+          <div id="red_4" class="red-d-p-4" @click="onChessClick(4)">4</div>
         </div>
         <div class="home yellow" style="position:absolute; top:0px; left:0px; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="yellow_1" class="yellow-d-p-1">1</div>
-          <div id="yellow_2" class="yellow-d-p-2">2</div>
-          <div id="yellow_3" class="yellow-d-p-3">3</div>
-          <div id="yellow_4" class="yellow-d-p-4">4</div>
+          <div id="yellow_1" class="yellow-d-p-1" @click="onChessClick(1)">1</div>
+          <div id="yellow_2" class="yellow-d-p-2" @click="onChessClick(2)">2</div>
+          <div id="yellow_3" class="yellow-d-p-3" @click="onChessClick(3)">3</div>
+          <div id="yellow_4" class="yellow-d-p-4" @click="onChessClick(4)">4</div>
         </div>
         <div class="home blue" style="position:absolute; top:0px; left:${unitLength * 12 + 'px'}; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="blue_1" class="blue-d-p-1">1</div>
-          <div id="blue_2" class="blue-d-p-2">2</div>
-          <div id="blue_3" class="blue-d-p-3">3</div>
-          <div id="blue_4" class="blue-d-p-4">4</div>
+          <div id="blue_1" class="blue-d-p-1" @click="onChessClick(1)">1</div>
+          <div id="blue_2" class="blue-d-p-2" @click="onChessClick(2)">2</div>
+          <div id="blue_3" class="blue-d-p-3" @click="onChessClick(3)">3</div>
+          <div id="blue_4" class="blue-d-p-4" @click="onChessClick(4)">4</div>
         </div>
         <div class="home green" style="position:absolute; top:${unitLength * 12 + 'px'}; left:${unitLength * 12 + 'px'}; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="green_1" class="green-d-p-1">1</div>
-          <div id="green_2" class="green-d-p-2">2</div>
-          <div id="green_3" class="green-d-p-3">3</div>
-          <div id="green_4" class="green-d-p-4">4</div>
-        </div>`
+          <div id="green_1" class="green-d-p-1" @click="onChessClick(1)">1</div>
+          <div id="green_2" class="green-d-p-2" @click="onChessClick(2)">2</div>
+          <div id="green_3" class="green-d-p-3" @click="onChessClick(3)">3</div>
+          <div id="green_4" class="green-d-p-4" @click="onChessClick(4)">4</div>
+        </div>
+        `
+    self.$nextTick(function() {
+      $('#dice-ele').css('top', unitLength * 16 + 'px')
+      $('#dice-ele').css('left', unitLength * 7 + 'px')
+      $('#dice-ele').css('width', unitLength + 'px')
+      $('#dice-ele').css('height', unitLength + 'px')
+    })
+    self.initClientListener()
+    //Problem:
+    //when refresh, the random color changed
 
+
+    // $(`.${self.color}`).removeClass('disable')
   }
 }
 </script>
@@ -99,7 +178,9 @@ export default {
   position: absolute;
 }
 
+
 /*.default-position div:nth-child(1)*/
+
 .red-d-p-1,
 .yellow-d-p-1,
 .blue-d-p-1,

@@ -1,18 +1,18 @@
 <template>
   <div class="hello" style="font-size:50px">
     <div class="row">
-      <div class="yellow container col-sm-6" @click="OnColorSelect('yellow')" :dis="yellow_disabled">
+      <div class="yellow ready-point col-sm-6 col-md-6 col-lg-6 col-xs-6" @click="OnColorSelect('yellow')" :dis="yellow_disabled">
         <div class="circle">{{yellow_name}}</div>
       </div>
-      <div class="blue container col-sm-6" @click="OnColorSelect('blue')" style="float:right" :dis="blue_disabled">
+      <div class="blue ready-point col-sm-6 col-md-6 col-lg-6 col-xs-6" @click="OnColorSelect('blue')" style="float:right" :dis="blue_disabled">
         <div class="circle">{{blue_name}}</div>
       </div>
     </div>
     <div class="row">
-      <div class="red container col-sm-6" @click="OnColorSelect('red')" :dis="red_disabled">
+      <div class="red ready-point col-sm-6 col-md-6 col-lg-6 col-xs-6" @click="OnColorSelect('red')" :dis="red_disabled">
         <div class="circle">{{red_name}}</div>
       </div>
-      <div class="green container col-sm-6" @click="OnColorSelect('green')" style="float:right" :dis="green_disabled">
+      <div class="green ready-point col-sm-6 col-md-6 col-lg-6 col-xs-6" @click="OnColorSelect('green')" style="float:right" :dis="green_disabled">
         <div class="circle">{{green_name}}</div>
       </div>
     </div>
@@ -53,7 +53,7 @@ export default {
       if (self.ready && self.color === color) {
         self.color = ''
         self.ready = false
-        socket.emit('onCancel', { name: self.name })
+        socket.emit('onCancel', self.name)
       } else if (!self.ready) {
         if (self.name && !isDisable) {
           self.color = color
@@ -63,7 +63,7 @@ export default {
       }
     },
     OnRemove: function (userName) {
-      socket.emit('onCancel', { name: userName })
+      socket.emit('onCancel', userName)
     },
     OnStart: function () {
       if (this.ready) {
@@ -72,7 +72,7 @@ export default {
     },
     init: function (players) {
       var self = this
-      // $('.container').each((index, item) => {
+      // $('.ready-point').each((index, item) => {
       //   $(item).removeClass('disabled')
       // })
       self.yellow_name = ''
@@ -87,8 +87,8 @@ export default {
       players.forEach(player => {
         // $(`.${player.color}`).addClass('disabled')
         //TODO: Check it in YDKJS, for and switch return false or return
-        self[player.color + '_name'] = player.name
-        self[player.color + '_disabled'] = 'disabled'
+        self[player.Color + '_name'] = player.Name
+        self[player.Color + '_disabled'] = 'disabled'
       })
       //kick out by admin
       if (self.ready && self.color != '') {
@@ -113,11 +113,11 @@ export default {
       console.error(err)
     })
 
-    socket.on('update', function (players) {
+    socket.on('room-update', function (players) {
       self.init(players)
     })
     socket.on('gotoAC', function () {
-      self.$router.push({ path: '/chess', params: { name: self.name, color: self.color } })
+      self.$router.push({ path: '/chess', query: { name: self.name, color: self.color } })
     })
   }
 }
@@ -144,7 +144,7 @@ a {
   color: #42b983;
 }
 
-.container {
+.ready-point {
   width: 300px;
   height: 300px;
 }

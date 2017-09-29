@@ -12,6 +12,31 @@ export default {
 </script>
 
 <style>
+@media (max-width:970px) {
+  #app {
+    margin-top: 0px !important;
+  }
+  .ready-point {
+    width: 60px !important;
+    height: 60px !important;
+    padding: 0px !important;
+  }
+
+  .hello .ready-point .circle {
+    border-radius: 50%;
+    border: solid 3px white;
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    margin-top: 5px;
+    margin-left: 5px;
+  }
+
+  .hello {
+    padding: 5px;
+  }
+}
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -20,6 +45,7 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
+
 .yellow {
   background-color: #f4f42e;
 }

@@ -31,3 +31,9 @@ Planing
 The last one: thing about the moving animation
 
 !!!important: You'd better do not use jquery in vue
+
+1.need a state to confirm chess running or stop, the socket may broken, when finish step should tell server ready
+
+2.Make sure the 4 players are all online, or it would be pause or replace by computer
+
+3.green=>red=>yellow=>blue
