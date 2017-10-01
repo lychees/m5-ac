@@ -47,7 +47,7 @@ export default {
     }
   },
   methods: {
-    OnColorSelect: function (color) {
+    OnColorSelect: function(color) {
       var self = this
       var isDisable = self[color + '_disabled'] == 'disabled'
       if (self.ready && self.color === color) {
@@ -62,15 +62,15 @@ export default {
         }
       }
     },
-    OnRemove: function (userName) {
+    OnRemove: function(userName) {
       socket.emit('onCancel', userName)
     },
-    OnStart: function () {
+    OnStart: function() {
       if (this.ready) {
         socket.emit('gotoAC')
       }
     },
-    init: function (players) {
+    init: function(players) {
       var self = this
       // $('.ready-point').each((index, item) => {
       //   $(item).removeClass('disabled')
@@ -102,21 +102,22 @@ export default {
       }
     }
   },
-  created: function () {
+  created: function() {
     var self = this
 
     axios.post(server_url.getRoomData).then(resp => {
-      if (Array.isArray(resp.data) && resp.data.length > 0) {
-        self.init(resp.data)
+      var players = resp.data.players
+      if (Array.isArray(players) && players.length > 0) {
+        self.init(players)
       }
     }).catch(err => {
       console.error(err)
     })
 
-    socket.on('room-update', function (players) {
+    socket.on('room-update', function(players) {
       self.init(players)
     })
-    socket.on('gotoAC', function () {
+    socket.on('gotoAC', function() {
       self.$router.push({ path: '/chess', query: { name: self.name, color: self.color } })
     })
   }

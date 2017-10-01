@@ -16,36 +16,53 @@ export default {
   name: 'chess',
   data() {
     return {
-      coordCollection: [],
+      roadCollection: [],
       outHomeCollection: [],
       chessHtml: '',
       name: '',
       color: '',
       diceNumber: 0,
       diceColor: '',
-      flow_position_id: -1,
+      flow_position_from: -1,
     }
   },
   methods: {
+    getPoint: function(positionId, color = '') {
+      if (positionId == 0) {
+        return this.outHomeCollection.find(x => x.color == color)
+      } else {
+        return this.roadCollection.find(x => x.id == positionId)
+      }
+    },
+    initPosition: function(players) {
+      var self = this
+      for (let player of players) {
+        player.Positions.forEach((p, index) => {
+          if (p >= 0) {
+            var point = self.getPoint(p, player.Color)
+            $(`#${player.Color}_${index + 1}`).css('top', point.top)
+            $(`#${player.Color}_${index + 1}`).css('left', point.left)
+          }
+        })
+      }
+    },
     initClientListener: function() {
       var self = this
       socket.on('position-update', function(resp) {
+        console.log('position-update', resp)
         if (resp.moveNext) {
           //make sure the true player move next
           if (self.name == resp.name) {
+            console.log('selfName', self.name)
             self.flow_position_from = resp.position_to
             self.move(resp.chess_numbers[0])
           }
         }
 
         //moving animation
-        var coordPosition
-        if (resp.outHome) {
-          coordPosition = self.outHomeCollection.find(x => x.color == resp.color)
-        } else {
-          coordPosition = self.coordCollection.find(x => x.id == resp.position_to)
-        }
-        $(`#${resp.color + '_' + resp.chess_numbers[0]}`).animate({ top: coordPosition.top, left: coordPosition.left });
+        var positionId = resp.outHome ? 0 : resp.position_to
+        var point = self.getPoint(positionId, resp.color)
+        $(`#${resp.color + '_' + resp.chess_numbers[0]}`).animate({ top: point.top, left: point.left });
 
         if (!resp.moveNext) {
           self.diceColor = resp.nextDiceColor
@@ -54,15 +71,15 @@ export default {
 
       socket.on('dice-update', function(resp) {
         console.log('dice-update', resp)
-        this.diceNumber = resp.number
+        self.diceNumber = resp.number
         //resp.name
       })
       socket.on('dice-update-animation', function(resp) {
         console.log('dice-update-animation', resp)
-        this.diceNumber = resp.number
+        self.diceNumber = resp.number
         //$('#dice-ele').animate({})
         //resp.nextDiceColor
-        this.diceColor = resp.nextDiceColor
+        self.diceColor = resp.nextDiceColor
       })
     },
     move: function(chess_number, movingByClick = false) {
@@ -71,14 +88,15 @@ export default {
         chess_number: chess_number,
         byClick: movingByClick,
         //use in moving flow, unused while by click
-        flow_position_id: this.flow_position_id,
+        flow_position_from: this.flow_position_from,
         diceNumber: this.diceNumber,
       })
     },
 
     //UI Event
-    onChessClick: function(chess_number) {
-      if (event.target.parent.hasClass(`${this.color}`)) {
+    onChessClick: function(number) {
+      var chess_number = number % 4 == 0 ? 4 : number % 4
+      if ($(event.target).hasClass(`${this.color}`)) {
         this.move(chess_number, true)
       }
     },
@@ -93,45 +111,39 @@ export default {
     self.name = this.$route.query.name
     self.color = this.$route.query.color
     axios.post(server_url.getChessData).then(resp => {
-      self.diceColor = resp.data
+      var acData = resp.data
+      self.diceColor = acData.diceColor
+      self.initPosition(acData.players)
     }).catch(err => {
       console.error(err)
     })
 
     var unitLength = document.body.clientWidth / 15
     var cla = new CoordCollection(document.body.clientWidth)
-    self.coordCollection = cla.Collection
+    self.roadCollection = cla.RoadCollection
+    self.homeCollection = cla.HomeCollection
     self.outHomeCollection = cla.OutHomeCollection
-    for (let coord of cla.Collection) {
+    for (let coord of cla.RoadCollection) {
       self.chessHtml += `
-        <div id="${coord.id}" class="${coord.color} chess-ele" style="top:${coord.top}; left:${coord.left};">
-          <div class="chess-circle"></div>
+        <div id="${coord.id}" class="${coord.color} chess-board-ele" style="top:${coord.top}; left:${coord.left};">
+          <div class="chess-board-circle"></div>
         </div>`
     }
+    for (let homePoint of cla.HomeCollection) {
+      self.chessHtml += `
+        <div id="${homePoint.color}_${homePoint.number}" class="${homePoint.color} chess-piece" 
+        style="top:${homePoint.top}; left:${homePoint.left};">${homePoint.number}</div>
+        `
+    }
+    //home background
     self.chessHtml += `
         <div class="home red" style="position:absolute; top:${unitLength * 12 + 'px'}; left:0px; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="red_1" class="red-d-p-1" @click="onChessClick(1)">1</div>
-          <div id="red_2" class="red-d-p-2" @click="onChessClick(2)">2</div>
-          <div id="red_3" class="red-d-p-3" @click="onChessClick(3)">3</div>
-          <div id="red_4" class="red-d-p-4" @click="onChessClick(4)">4</div>
         </div>
         <div class="home yellow" style="position:absolute; top:0px; left:0px; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="yellow_1" class="yellow-d-p-1" @click="onChessClick(1)">1</div>
-          <div id="yellow_2" class="yellow-d-p-2" @click="onChessClick(2)">2</div>
-          <div id="yellow_3" class="yellow-d-p-3" @click="onChessClick(3)">3</div>
-          <div id="yellow_4" class="yellow-d-p-4" @click="onChessClick(4)">4</div>
         </div>
         <div class="home blue" style="position:absolute; top:0px; left:${unitLength * 12 + 'px'}; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="blue_1" class="blue-d-p-1" @click="onChessClick(1)">1</div>
-          <div id="blue_2" class="blue-d-p-2" @click="onChessClick(2)">2</div>
-          <div id="blue_3" class="blue-d-p-3" @click="onChessClick(3)">3</div>
-          <div id="blue_4" class="blue-d-p-4" @click="onChessClick(4)">4</div>
         </div>
         <div class="home green" style="position:absolute; top:${unitLength * 12 + 'px'}; left:${unitLength * 12 + 'px'}; width:${unitLength * 3 + 'px'}; height:${unitLength * 3 + 'px'}">
-          <div id="green_1" class="green-d-p-1" @click="onChessClick(1)">1</div>
-          <div id="green_2" class="green-d-p-2" @click="onChessClick(2)">2</div>
-          <div id="green_3" class="green-d-p-3" @click="onChessClick(3)">3</div>
-          <div id="green_4" class="green-d-p-4" @click="onChessClick(4)">4</div>
         </div>
         `
     self.$nextTick(function() {
@@ -144,22 +156,33 @@ export default {
     //Problem:
     //when refresh, the random color changed
 
-
     // $(`.${self.color}`).removeClass('disable')
+    console.log('created finish')
+  },
+  mounted: function() {
+    var self = this
+    console.log('beforeMount')
+    // @click="onChessClick(${homePoint.number})"
+    console.log($('.chess-piece'))
+    $('.chess-piece').each((index, piece) => {
+      $(piece).on('click', function() {
+        self.onChessClick(index + 1)
+      })
+    })
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
-.chess-ele {
+.chess-board-ele {
   position: absolute;
   width: calc(100% / 15);
   height: 0;
   padding-bottom: calc(100% / 15);
 }
 
-.chess-circle {
+.chess-board-circle {
   border-radius: 50%;
   border: solid 3px white;
   position: absolute;
@@ -170,46 +193,31 @@ export default {
   margin-left: calc(100% / 10);
 }
 
-.home>div {
+.chess-piece {
   border-radius: 50%;
   border: solid 3px white;
-  width: calc(100% / 3);
-  height: calc(100% / 3);
+  width: calc(100% / 15);
+  height: 0;
+  padding-bottom: calc(100% / 15);
   position: absolute;
+  z-index: 1000;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*.default-position div:nth-child(1)*/
-
-.red-d-p-1,
-.yellow-d-p-1,
-.blue-d-p-1,
-.green-d-p-1 {
-  top: calc(100% / 12);
-  left: calc(100% / 12);
-}
-
-.red-d-p-2,
-.yellow-d-p-2,
-.blue-d-p-2,
-.green-d-p-2 {
-  top: calc(100% / 12);
-  right: calc(100% / 12);
-}
-
-.red-d-p-3,
-.yellow-d-p-3,
-.blue-d-p-3,
-.green-d-p-3 {
-  top: calc(100% * 7 / 12);
-  left: calc(100% / 12);
-}
-
-.red-d-p-4,
-.yellow-d-p-4,
-.blue-d-p-4,
-.green-d-p-4 {
-  top: calc(100% * 7 / 12);
-  right: calc(100% / 12);
-}
 </style>

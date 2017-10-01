@@ -34,6 +34,16 @@ export default {
 
   .hello {
     padding: 5px;
+    font-size: 5px !important;
+  }
+
+  .hello input {
+    height: 10px !important;
+    width:100px;
+  }
+  .hello button.start-btn {
+    height: 10px;
+    width: 50px;
   }
 }
 

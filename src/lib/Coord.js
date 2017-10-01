@@ -35,7 +35,7 @@ class Coord {
 }
 
 var positionMap = [
-    { id: 1, unitLeft: 4, unitTop: 14 },//home start first step
+    { id: 1, unitLeft: 4, unitTop: 14 },//red start first step
     { id: 2, unitLeft: 4, unitTop: 13 },
     { id: 3, unitLeft: 4, unitTop: 12 },
     { id: 4, unitLeft: 4, unitTop: 11 },
@@ -50,7 +50,7 @@ var positionMap = [
     { id: 11, unitLeft: 0, unitTop: 7 },
     { id: 12, unitLeft: 0, unitTop: 6 },
     { id: 13, unitLeft: 0, unitTop: 5 },
-    { id: 14, unitLeft: 0, unitTop: 4 },//home start first step
+    { id: 14, unitLeft: 0, unitTop: 4 },//yellow start first step
 
     { id: 15, unitLeft: 1, unitTop: 4 },
     { id: 16, unitLeft: 2, unitTop: 4 },
@@ -66,7 +66,7 @@ var positionMap = [
     { id: 24, unitLeft: 7, unitTop: 0 },
     { id: 25, unitLeft: 8, unitTop: 0 },
     { id: 26, unitLeft: 9, unitTop: 0 },
-    { id: 27, unitLeft: 10, unitTop: 0 },//home start first step
+    { id: 27, unitLeft: 10, unitTop: 0 },//blue start first step
 
     { id: 28, unitLeft: 10, unitTop: 1 },
     { id: 29, unitLeft: 10, unitTop: 2 },
@@ -82,7 +82,7 @@ var positionMap = [
     { id: 37, unitLeft: 14, unitTop: 7 },
     { id: 38, unitLeft: 14, unitTop: 8 },
     { id: 39, unitLeft: 14, unitTop: 9 },
-    { id: 40, unitLeft: 14, unitTop: 10 }, //home start first step
+    { id: 40, unitLeft: 14, unitTop: 10 }, //green start first step
 
     { id: 41, unitLeft: 13, unitTop: 10 },
     { id: 42, unitLeft: 12, unitTop: 10 },
@@ -138,17 +138,39 @@ var outHomeMap = [
     { color: 'green', unitLeft: 14, unitTop: 11 }
 ]
 
+var homeMap = [
+    { color: 'red', unitLeft: 1 / 4, unitTop: 12 + 1 / 4, number: 1 },
+    { color: 'red', unitLeft: 1 + 3 / 4, unitTop: 12 + 1 / 4, number: 2 },
+    { color: 'red', unitLeft: 1 / 4, unitTop: 12 + 1 + 3 / 4, number: 3 },
+    { color: 'red', unitLeft: 1 + 3 / 4, unitTop: 12 + 1 + 3 / 4, number: 4 },
+
+    { color: 'yellow', unitLeft: 1 / 4, unitTop: 1 / 4, number: 1 },
+    { color: 'yellow', unitLeft: 1 + 3 / 4, unitTop: 1 / 4, number: 2 },
+    { color: 'yellow', unitLeft: 1 / 4, unitTop: 1 + 3 / 4, number: 3 },
+    { color: 'yellow', unitLeft: 1 + 3 / 4, unitTop: 1 + 3 / 4, number: 4 },
+
+    { color: 'blue', unitLeft: 12 + 1 / 4, unitTop: 1 / 4, number: 1 },
+    { color: 'blue', unitLeft: 12 + 1 + 3 / 4, unitTop: 1 / 4, number: 2 },
+    { color: 'blue', unitLeft: 12 + 1 / 4, unitTop: 1 + 3 / 4, number: 3 },
+    { color: 'blue', unitLeft: 12 + 1 + 3 / 4, unitTop: 1 + 3 / 4, number: 4 },
+
+    { color: 'green', unitLeft: 12 + 1 / 4, unitTop: 12 + 1 / 4, number: 1 },
+    { color: 'green', unitLeft: 12 + 1 + 3 / 4, unitTop: 12 + 1 / 4, number: 2 },
+    { color: 'green', unitLeft: 12 + 1 / 4, unitTop: 12 + 1 + 3 / 4, number: 3 },
+    { color: 'green', unitLeft: 12 + 1 + 3 / 4, unitTop: 12 + 1 + 3 / 4, number: 4 },
+]
+
 export default class CoordCollection {
     constructor(screenWidth) {
         this.unitLength = screenWidth / 15
-        this.RoadCollection = []
+        this.ChessRoadCollection = []
         for (let i = 1; i < 53; i++) {
-            this.RoadCollection.push(new Coord(i, this.unitLength))
+            this.ChessRoadCollection.push(new Coord(i, this.unitLength))
         }
 
-        this.TargetPipes = []
+        this.ChessTargetPipeCollection = []
         for (let item of targetPipeMap) {
-            this.TargetPipes.push({
+            this.ChessTargetPipeCollection.push({
                 id: item.id,
                 top: item.unitTop * this.unitLength + 'px',
                 left: item.unitLeft * this.unitLength + 'px',
@@ -156,7 +178,7 @@ export default class CoordCollection {
             })
         }
 
-        this.Collection = this.RoadCollection.concat(this.TargetPipes)
+        this.RoadCollection = this.ChessRoadCollection.concat(this.ChessTargetPipeCollection)
 
         this.OutHomeCollection = []
         for (let item of outHomeMap) {
@@ -164,6 +186,16 @@ export default class CoordCollection {
                 color: item.color,
                 top: item.unitTop * this.unitLength + 'px',
                 left: item.unitLeft * this.unitLength + 'px',
+            })
+        }
+
+        this.HomeCollection = []
+        for (let item of homeMap) {
+            this.HomeCollection.push({
+                color: item.color,
+                top: item.unitTop * this.unitLength + 'px',
+                left: item.unitLeft * this.unitLength + 'px',
+                number: item.number
             })
         }
 
