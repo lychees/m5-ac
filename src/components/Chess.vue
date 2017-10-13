@@ -112,6 +112,9 @@ export default {
     self.color = this.$route.query.color
     axios.post(server_url.getChessData).then(resp => {
       var acData = resp.data
+      if (acData.players.length == 0) {
+        self.$router.push({ path: '/' })
+      }
       self.diceColor = acData.diceColor
       self.initPosition(acData.players)
     }).catch(err => {
@@ -202,6 +205,8 @@ export default {
   position: absolute;
   z-index: 1000;
 }
+
+
 
 
 

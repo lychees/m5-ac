@@ -65,11 +65,24 @@ var init = function (io) {
                 var player = global.ac.players.find(x => x.Name == name)
                 var color = player.Color
                 var playerPositions = player.Positions
-                //check if moving out home or first step
+                //move by player or in flow
                 if (byClick) {
+                    //out home
                     if (playerPositions[chess_number - 1] == -1) {
-                        var outHome = true
-                    } else if (playerPositions[chess_number - 1] == 0) {
+                        if (chess_number != diceNumber) {
+                            return
+                        }
+                        io.emit('position-update', {
+                            name: name,
+                            color: color,
+                            chess_numbers: [chess_number],
+                            position_to: 0,
+                            outHome: true,
+                        })
+                        return
+                    }
+                    //first step
+                    else if (playerPositions[chess_number - 1] == 0) {
                         //first step position should be calculated by color
                         if (color == 'yellow') {
                             flow_position_from = 14 - 1
@@ -78,7 +91,9 @@ var init = function (io) {
                         } else if (color == 'green') {
                             flow_position_from = 40 - 1
                         }
-                    } else {
+                    }
+                    //continue step
+                    else {
                         flow_position_from = playerPositions[chess_number - 1]
                     }
                 }
@@ -92,27 +107,15 @@ var init = function (io) {
                     }
                 })
 
-                //test data
-                io.emit('position-update', {
-                    name: name,
-                    color: color,
-                    chess_numbers: chess_numbers_on_this_position,
-                    position_to: flow_position_to,
-                    moveNext: true,
-                    outHome: outHome,
-                    nextDiceColor: util.getNextColor(color)
-                })
-                return
-
-                io.emit('position-update', { name: name, color: color, chess_numbers: chess_numbers_on_this_position, position_to: flow_position_to, moveNext: true })
-
+                //jump logic
                 if (stepNumber == diceNumber) {
                     stepNumber = 0
-                    //jump logic
-                    flow_position_to += 5
+
+                    flow_position_to = util.jump(flow_position_from, color)
+
                     //strike other player's chess
                     for (let otherPlayer of global.ac.players) {
-                        if (otherPlayer.name != name) {
+                        if (otherPlayer.Name != name) {
                             var otherCount = otherPlayer.Positions.filter(x => x == flow_position_to).length
                             //find other player's chess on the position
                             if (otherCount > 0) {
@@ -133,10 +136,25 @@ var init = function (io) {
                     }
                     //1.your chess number >= other's, you win
                     playerPositions[chess_number - 1] = flow_position_to
-                    io.emit('position-update', { name: name, chess_numbers: [chess_number], position_to: flow_position_to })
-                    io.emit('position-update', { name: name, chess_numbers: [chess_number], position_to: flow_position_to })
+                    var nextColor = util.getNextColor(color)
+                    global.ac.diceColor = nextColor
+                    io.emit('position-update', {
+                        name: name,
+                        color: color,
+                        chess_numbers: chess_numbers_on_this_position,
+                        position_to: flow_position_to,
+                        nextDiceColor: nextColor
+                    })
                 } else {
                     stepNumber++
+
+                    io.emit('position-update', {
+                        name: name,
+                        color: color,
+                        chess_numbers: chess_numbers_on_this_position,
+                        position_to: flow_position_to,
+                        moveNext: true,
+                    })
                 }
             })
         })
