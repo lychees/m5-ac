@@ -85,20 +85,29 @@ var init = function (io) {
                     else if (playerPositions[chess_number - 1] == 0) {
                         //first step position should be calculated by color
                         if (color == 'yellow') {
-                            flow_position_from = 14 - 1
+                            flow_position_to = 14
                         } else if (color == 'blue') {
-                            flow_position_from = 27 - 1
+                            flow_position_to = 27
                         } else if (color == 'green') {
-                            flow_position_from = 40 - 1
+                            flow_position_to = 40
                         }
+                        io.emit('position-update', {
+                            name: name,
+                            color: color,
+                            chess_numbers: [chess_number],
+                            position_to: flow_position_to,
+                            moveNext: true,
+                        })
+                        return
                     }
-                    //continue step
                     else {
-                        flow_position_from = playerPositions[chess_number - 1]
+                        flow_position_to = playerPositions[chess_number - 1] + 1
                     }
                 }
-
-                var flow_position_to = flow_position_from + 1
+                //continue step
+                else {
+                    var flow_position_to = flow_position_from + 1
+                }
 
                 var chess_numbers_on_this_position = []
                 playerPositions.forEach((x, index) => {
